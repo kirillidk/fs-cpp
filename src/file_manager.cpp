@@ -33,6 +33,9 @@ void FileManager::writeLine(const std::string& line) {
     if (!m_file) {
         throw std::runtime_error("Failed to write line to file");
     }
+
+    m_file.clear();
+    m_file.seekg(0, std::ios::beg);
 }
 
 void FileManager::openFile() {

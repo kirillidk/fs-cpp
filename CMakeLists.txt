@@ -7,3 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(fs-lib src/file_manager.cpp)
 
 target_include_directories(fs-lib PUBLIC include)
+
+add_executable(example examples/example.cpp)
+
+target_link_libraries(example fs-lib)
