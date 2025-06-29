@@ -1,30 +1,26 @@
 #pragma once
 
-#include <filesystem>
-#include <fstream>
 #include <string>
+#include <memory>  // std::unique_ptr
 
 namespace fs {
 
 class FileManager {
 public:
-    explicit FileManager(const std::filesystem::path& filepath);
+    explicit FileManager(const std::string& filepath);
     ~FileManager();
 
     FileManager(const FileManager&) = delete;
     FileManager& operator=(const FileManager&) = delete;
 
-    FileManager(FileManager&& other) = default;
-    FileManager& operator=(FileManager&& other) = default;
+    FileManager(FileManager&& other);
+    FileManager& operator=(FileManager&& other);
 
     std::string readLine();
     void writeLine(const std::string& line);
 private:
-    std::filesystem::path m_filepath;
-    std::fstream m_file;
-
-    void openFile();
-    void closeFile();
+    class Impl;
+    std::unique_ptr<Impl> m_pImpl;
 };
 
 }

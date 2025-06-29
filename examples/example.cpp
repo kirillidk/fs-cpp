@@ -1,6 +1,8 @@
-#include <file_manager.hpp>
 #include <iostream>
+#include <exception>
 #include <string>
+
+#include <file_manager.hpp>
 
 int main() {
     try {
@@ -8,6 +10,8 @@ int main() {
 
         file.writeLine("Hello, World!");
         std::string line = file.readLine();
+
+        std::cout << line << '\n';  // Hello, World!
 
     } catch (const std::exception& e) {
         std::cerr << "std::exception: " << e.what() << '\n';

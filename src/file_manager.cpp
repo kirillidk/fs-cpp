@@ -1,58 +1,80 @@
+#include <filesystem>
+#include <fstream>
+
 #include <file_manager.hpp>
 
 namespace fs {
 
-FileManager::FileManager(const std::filesystem::path& filepath)
-    : m_filepath(filepath) {
-    openFile();
-}
+class FileManager::Impl {
+public:
+    explicit Impl(const std::string& path) : filepath(path) { openFile(); }
 
-FileManager::~FileManager() { closeFile(); }
+    ~Impl() { closeFile(); }
 
-std::string FileManager::readLine() {
-    if (!m_file.is_open()) {
-        throw std::runtime_error("File is not open for reading");
-    }
-
-    std::string line;
-    if (!std::getline(m_file, line)) {
-        if (m_file.eof()) {
-            throw std::runtime_error("End of file reached");
+    std::string readLine() {
+        if (!file.is_open()) {
+            throw std::runtime_error("File is not open for reading");
         }
-        throw std::runtime_error("Failed to read line from file");
+
+        std::string line;
+        if (!std::getline(file, line)) {
+            if (file.eof()) {
+                throw std::runtime_error("End of file reached");
+            }
+            throw std::runtime_error("Failed to read line from file");
+        }
+        return line;
     }
-    return line;
-}
+
+    void writeLine(const std::string& line) {
+        if (!file.is_open()) {
+            throw std::runtime_error("File is not open for writing");
+        }
+
+        file << line << std::endl;
+        if (!file) {
+            throw std::runtime_error("Failed to write line to file");
+        }
+
+        file.clear();
+        file.seekg(0, std::ios::beg);
+    }
+private:
+    std::filesystem::path filepath;
+    std::fstream file;
+
+    void openFile() {
+        if (filepath.has_parent_path()) {
+            std::filesystem::create_directories(filepath.parent_path());
+        }
+
+        file.open(filepath, std::ios::in | std::ios::out | std::ios::app);
+        if (!file.is_open()) {
+            throw std::runtime_error(
+                "Failed to open file: " + filepath.string()
+            );
+        }
+    }
+
+    void closeFile() {
+        if (file.is_open()) {
+            file.close();
+        }
+    }
+};
+
+FileManager::FileManager(const std::string& filepath)
+    : m_pImpl(std::make_unique<Impl>(filepath)) {}
+
+FileManager::~FileManager() = default;
+
+FileManager::FileManager(FileManager&& other) = default;
+FileManager& FileManager::operator=(FileManager&& other) = default;
+
+std::string FileManager::readLine() { return m_pImpl->readLine(); }
 
 void FileManager::writeLine(const std::string& line) {
-    if (!m_file.is_open()) {
-        throw std::runtime_error("File is not open for writing");
-    }
-
-    m_file << line << std::endl;
-    if (!m_file) {
-        throw std::runtime_error("Failed to write line to file");
-    }
-
-    m_file.clear();
-    m_file.seekg(0, std::ios::beg);
-}
-
-void FileManager::openFile() {
-    if (m_filepath.has_parent_path()) {
-        std::filesystem::create_directories(m_filepath.parent_path());
-    }
-
-    m_file.open(m_filepath, std::ios::in | std::ios::out | std::ios::app);
-    if (!m_file.is_open()) {
-        throw std::runtime_error("Failed to open file: " + m_filepath.string());
-    }
-}
-
-void FileManager::closeFile() {
-    if (m_file.is_open()) {
-        m_file.close();
-    }
+    m_pImpl->writeLine(line);
 }
 
 }
